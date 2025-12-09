@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Block {
+  id                String    @id @default(cuid())
+  blockNumber       BigInt    @unique
+  blockHash         String    @unique
+  parentHash        String
+  miner            String?
+  difficulty        BigInt?
+  totalDifficulty   BigInt?
+  size              Int?
+  gasLimit          BigInt
+  gasUsed           BigInt
+  timestamp         DateTime
+  transactionCount  Int       @default(0)
+  nonce             String?
+  extraData         String?
+  logsBloom         String?
+  mixHash           String?
+  receiptsRoot      String?
+  sha3Uncles        String?
+  stateRoot         String?
+  transactionsRoot  String?
+  uncles            Json?
+  baseFeePerGas     BigInt?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  transactions      Transaction[]
+
+  @@map("blocks")
+}
+
+model Transaction {
+  id              String     @id @default(cuid())
+  hash            String     @unique
+  blockNumber     BigInt
+  transactionIndex Int
+  blockHash       String
+  from            String
+  to              String?
+  value           BigInt
+  gas             BigInt
+  gasPrice        BigInt?
+  maxFeePerGas    BigInt?
+  maxPriorityFeePerGas BigInt?
+  input           String
+  nonce           BigInt
+  v               BigInt?
+  r               BigInt?
+  s               BigInt?
+  type            Int?
+  accessList      Json?
+  chainId         BigInt?
+  status          Int?
+  gasUsed         BigInt?
+  contractAddress String?
+  cumulativeGasUsed BigInt?
+  effectiveGasPrice BigInt?
+  logs            Json?
+  logsBloom       String?
+
+  block           Block      @relation(fields: [blockHash], references: [blockHash], onDelete: Cascade)
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@map("transactions")
+}

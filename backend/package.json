@@ -1,0 +1,35 @@
+{
+  "name": "ethereum-block-dashboard-backend",
+  "version": "1.0.0",
+  "description": "Backend for Ethereum block dashboard",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "pg": "^8.8.0",
+    "@prisma/client": "^4.9.0",
+    "ethers": "^5.7.2",
+    "ws": "^8.12.1",
+    "axios": "^1.3.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4",
+    "@types/node": "^18.14.0",
+    "@types/express": "^4.17.17",
+    "@types/cors": "^2.8.13",
+    "@types/pg": "^8.6.6",
+    "@types/ws": "^8.5.4",
+    "tsx": "^3.12.3",
+    "prisma": "^4.9.0"
+  }
+}
