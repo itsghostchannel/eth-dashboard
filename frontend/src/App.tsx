@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Dashboard } from '@/pages/dashboard'
+import { Dashboard } from '@/components/Dashboard'
 
 function App() {
   return (
@@ -14,9 +14,11 @@ function App() {
           </div>
         </header>
         <main>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-          </Routes>
+          <div className="container mx-auto p-6">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+            </Routes>
+          </div>
         </main>
       </div>
     </ThemeProvider>
