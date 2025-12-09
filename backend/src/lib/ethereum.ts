@@ -39,7 +39,7 @@ async function makeRpcRequest<T>(method: string, params: any[]): Promise<T> {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
 
-  const data: JsonRpcResponse<T> = await response.json()
+  const data = await response.json() as JsonRpcResponse<T>
 
   if (data.error) {
     throw new EthereumRPCError(data.error.code, data.error.message, data.error.data)

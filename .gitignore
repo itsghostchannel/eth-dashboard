@@ -26,6 +26,7 @@ go.work
 *.swo
 *~
 *.env
+dist/
 
 # OS files
 .DS_Store
