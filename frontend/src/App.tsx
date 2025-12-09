@@ -1,13 +1,25 @@
 import { Routes, Route } from 'react-router-dom'
-import { BlockDashboard } from './pages/BlockDashboard'
+import { ThemeProvider } from '@/providers/theme-provider'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Dashboard } from '@/pages/dashboard'
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <Routes>
-        <Route path="/" element={<BlockDashboard />} />
-      </Routes>
-    </div>
+    <ThemeProvider defaultTheme="default" storageKey="vite-ui-theme">
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-card">
+          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 className="text-xl font-bold">Ethereum Block Explorer</h1>
+            <ThemeToggle />
+          </div>
+        </header>
+        <main>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+          </Routes>
+        </main>
+      </div>
+    </ThemeProvider>
   )
 }
 
