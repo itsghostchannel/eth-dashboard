@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { RefreshCw, Power } from 'lucide-react'
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { formatTimeAgo, weiToEth, weiToGwei, truncateAddress, formatTransactionCount, calculateGasPercentage } from '@/lib/format'
 
 interface LatestBlock {
@@ -36,11 +39,20 @@ interface GasSpender {
   totalGasFeesWei: string
 }
 
+interface VolumeStats {
+  blockNumber: string
+  txCount: number
+  totalValueWei: string
+  totalGasUsed: string
+  avgGasPriceWei: string
+}
+
 interface DashboardData {
   latestBlock: LatestBlock | null
   topSenders: TopSender[]
   topReceivers: TopReceiver[]
   topGasSpenders: GasSpender[]
+  volumeStats: VolumeStats[]
 }
 
 export function Dashboard() {
@@ -48,41 +60,46 @@ export function Dashboard() {
     latestBlock: null,
     topSenders: [],
     topReceivers: [],
-    topGasSpenders: []
+    topGasSpenders: [],
+    volumeStats: []
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [autoPoll, setAutoPoll] = useState<boolean>(true)
 
   const fetchDashboardData = useCallback(async () => {
     try {
       setError(null)
 
       // Fetch all data in parallel
-      const [latestRes, sendersRes, receiversRes, gasRes] = await Promise.all([
-        fetch('http://localhost:3001/api/blocks/latest'),
-        fetch('http://localhost:3001/api/stats/top-senders'),
-        fetch('http://localhost:3001/api/stats/top-receivers'),
-        fetch('http://localhost:3001/api/stats/top-gas-spenders')
+      const [latestRes, sendersRes, receiversRes, gasRes, volumeRes] = await Promise.all([
+        fetch('/api/blocks/latest'),
+        fetch('/api/stats/top-senders'),
+        fetch('/api/stats/top-receivers'),
+        fetch('/api/stats/top-gas-spenders'),
+        fetch('/api/charts/volume-per-block')
       ])
 
       // Check if all requests were successful
-      if (!latestRes.ok || !sendersRes.ok || !receiversRes.ok || !gasRes.ok) {
+      if (!latestRes.ok || !sendersRes.ok || !receiversRes.ok || !gasRes.ok || !volumeRes.ok) {
         throw new Error('Failed to fetch dashboard data')
       }
 
-      const [latestBlock, sendersData, receiversData, gasData] = await Promise.all([
+      const [latestBlock, sendersData, receiversData, gasData, volumeData] = await Promise.all([
         latestRes.json(),
         sendersRes.json(),
         receiversRes.json(),
-        gasRes.json()
+        gasRes.json(),
+        volumeRes.json()
       ])
 
       setData({
         latestBlock,
         topSenders: sendersData.topSenders || [],
         topReceivers: receiversData.topReceivers || [],
-        topGasSpenders: gasData.topGasSpenders || []
+        topGasSpenders: gasData.topGasSpenders || [],
+        volumeStats: volumeData.volumeStats || []
       })
 
       setLastUpdated(new Date())
@@ -100,14 +117,20 @@ export function Dashboard() {
     fetchDashboardData()
   }, [fetchDashboardData])
 
-  // Set up polling every 30 seconds
+  // Set up polling every 30 seconds (only if auto-poll is enabled)
   useEffect(() => {
+    if (!autoPoll) return
+
     const interval = setInterval(() => {
       fetchDashboardData()
     }, 30000)
 
     return () => clearInterval(interval)
-  }, [fetchDashboardData])
+  }, [fetchDashboardData, autoPoll])
+
+  const toggleAutoPoll = () => {
+    setAutoPoll(!autoPoll)
+  }
 
   // Calculate derived metrics
   const totalTransactions = data.latestBlock?.txCount || 0
@@ -168,11 +191,32 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header with last updated time */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Ethereum Dashboard</h1>
-        <div className="text-sm text-muted-foreground">
-          Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+      {/* Header with controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Ethereum Dashboard</h1>
+          <div className="text-sm text-muted-foreground">
+            Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={fetchDashboardData}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={toggleAutoPoll}
+            variant={autoPoll ? "default" : "outline"}
+            size="sm"
+          >
+            <Power className="h-4 w-4 mr-2" />
+            Auto-poll: {autoPoll ? "ON" : "OFF"}
+          </Button>
         </div>
       </div>
 
@@ -414,6 +458,150 @@ export function Dashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Transaction Count Line Chart */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-lg">Transaction Count Trend</CardTitle>
+              <CardDescription>Transactions per block over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <LoadingSkeleton />
+                </div>
+              ) : data.volumeStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={data.volumeStats.reverse()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="blockNumber"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(value, name) => [value, 'Transactions']}
+                      labelFormatter={(label) => `Block #${label}`}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="txCount"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  No chart data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Total Value Bar Chart */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-lg">Total Value per Block</CardTitle>
+              <CardDescription>ETH value transferred per block</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <LoadingSkeleton />
+                </div>
+              ) : data.volumeStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={data.volumeStats.reverse()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="blockNumber"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => `${value} ETH`}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [`${parseFloat(weiToEth(String(value))).toFixed(6)} ETH`, 'Total Value']}
+                      labelFormatter={(label) => `Block #${label}`}
+                    />
+                    <Bar
+                      dataKey="totalValueWei"
+                      fill="#10b981"
+                      name="Total Value (wei)"
+                      tickFormatter={(value) => weiToEth(String(value))}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  No chart data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Gas Usage Area Chart */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-lg">Gas Usage Trend</CardTitle>
+              <CardDescription>Total gas used per block</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <LoadingSkeleton />
+                </div>
+              ) : data.volumeStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={data.volumeStats.reverse()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="blockNumber"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => `${(Number(value) / 1000000).toFixed(1)}M`}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        `${formatTransactionCount(Number(value))}`,
+                        'Gas Used'
+                      ]}
+                      labelFormatter={(label) => `Block #${label}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="totalGasUsed"
+                      stroke="#f59e0b"
+                      fill="#f59e0b"
+                      fillOpacity={0.3}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  No chart data available
                 </div>
               )}
             </CardContent>
