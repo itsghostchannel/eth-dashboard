@@ -8,69 +8,34 @@ datasource db {
 }
 
 model Block {
-  id                String    @id @default(cuid())
-  blockNumber       BigInt    @unique
-  blockHash         String    @unique
-  parentHash        String
-  miner            String?
-  difficulty        BigInt?
-  totalDifficulty   BigInt?
-  size              Int?
-  gasLimit          BigInt
-  gasUsed           BigInt
-  timestamp         DateTime
-  transactionCount  Int       @default(0)
-  nonce             String?
-  extraData         String?
-  logsBloom         String?
-  mixHash           String?
-  receiptsRoot      String?
-  sha3Uncles        String?
-  stateRoot         String?
-  transactionsRoot  String?
-  uncles            Json?
-  baseFeePerGas     BigInt?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  blockNumber  BigInt     @unique @id
+  hash         String     @unique
+  parentHash   String
+  timestamp    DateTime
+  gasUsed      BigInt
+  gasLimit     BigInt
+  baseFeeWei   BigInt?
+  transactions Transaction[]
 
-  transactions      Transaction[]
-
+  @@index([blockNumber])
   @@map("blocks")
 }
 
 model Transaction {
-  id              String     @id @default(cuid())
-  hash            String     @unique
-  blockNumber     BigInt
-  transactionIndex Int
-  blockHash       String
-  from            String
-  to              String?
-  value           BigInt
-  gas             BigInt
-  gasPrice        BigInt?
-  maxFeePerGas    BigInt?
-  maxPriorityFeePerGas BigInt?
-  input           String
-  nonce           BigInt
-  v               BigInt?
-  r               BigInt?
-  s               BigInt?
-  type            Int?
-  accessList      Json?
-  chainId         BigInt?
-  status          Int?
-  gasUsed         BigInt?
-  contractAddress String?
-  cumulativeGasUsed BigInt?
-  effectiveGasPrice BigInt?
-  logs            Json?
-  logsBloom       String?
+  id           String    @id @default(uuid())
+  blockNumber  BigInt
+  txHash       String    @unique
+  from         String
+  to           String?
+  valueWei     BigInt
+  gasUsed      BigInt
+  gasPriceWei  BigInt?
+  nonce        BigInt
 
-  block           Block      @relation(fields: [blockHash], references: [blockHash], onDelete: Cascade)
+  block        Block     @relation(fields: [blockNumber], references: [blockNumber], onDelete: Cascade)
 
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
+  @@index([blockNumber])
+  @@index([from])
+  @@index([to])
   @@map("transactions")
 }
