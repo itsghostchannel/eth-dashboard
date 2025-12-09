@@ -36,8 +36,10 @@
     "@types/node": "^24.10.2",
     "@types/pg": "^8.6.6",
     "@types/pino": "^7.0.4",
+    "@types/supertest": "^6.0.3",
     "@types/ws": "^8.5.4",
     "prisma": "^5.22.0",
+    "supertest": "^7.1.4",
     "tsx": "^3.12.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"

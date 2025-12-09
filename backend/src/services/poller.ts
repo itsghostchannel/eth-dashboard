@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from '../prisma'
 import pino from 'pino'
 import { fetchBlock } from '../lib/ethereum'
 import { getPollInterval, getMaxBlocks, validateConfig } from './config'
@@ -14,8 +14,6 @@ const logger = pino({
     }
   })
 })
-
-const prisma = new PrismaClient()
 
 let pollerInterval: NodeJS.Timeout | null = null
 
