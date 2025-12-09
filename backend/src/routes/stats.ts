@@ -18,22 +18,22 @@ router.get('/top-senders', async (req: Request, res: Response) => {
   try {
     const query = `
       SELECT
-        from_address as address,
+        "from" as address,
         COUNT(*) as tx_count,
-        COALESCE(SUM(value_wei), 0) as total_value
+        COALESCE(SUM("valueWei"), 0) as total_value
       FROM transactions
-      WHERE block_number >= (
-        SELECT block_number
+      WHERE "blockNumber" IN (
+        SELECT "blockNumber"
         FROM blocks
-        ORDER BY block_number DESC
-        LIMIT 1 OFFSET 4
+        ORDER BY "blockNumber" DESC
+        LIMIT 5
       )
-      GROUP BY from_address
+      GROUP BY "from"
       ORDER BY tx_count DESC, total_value DESC
       LIMIT 10
     `
 
-    const results = await prisma.$queryRaw<Array<{
+    const results = await prisma.$queryRawUnsafe<Array<{
       address: string
       tx_count: bigint
       total_value: bigint
@@ -59,23 +59,23 @@ router.get('/top-receivers', async (req: Request, res: Response) => {
   try {
     const query = `
       SELECT
-        to_address as address,
+        "to" as address,
         COUNT(*) as tx_count,
-        COALESCE(SUM(value_wei), 0) as total_value
+        COALESCE(SUM("valueWei"), 0) as total_value
       FROM transactions
-      WHERE block_number >= (
-        SELECT block_number
+      WHERE "blockNumber" IN (
+        SELECT "blockNumber"
         FROM blocks
-        ORDER BY block_number DESC
-        LIMIT 1 OFFSET 4
+        ORDER BY "blockNumber" DESC
+        LIMIT 5
       )
-      AND to_address IS NOT NULL
-      GROUP BY to_address
+      AND "to" IS NOT NULL
+      GROUP BY "to"
       ORDER BY tx_count DESC, total_value DESC
       LIMIT 10
     `
 
-    const results = await prisma.$queryRaw<Array<{
+    const results = await prisma.$queryRawUnsafe<Array<{
       address: string
       tx_count: bigint
       total_value: bigint
@@ -101,21 +101,21 @@ router.get('/top-gas-spenders', async (req: Request, res: Response) => {
   try {
     const query = `
       SELECT
-        from_address as address,
-        COALESCE(SUM(gas_used * COALESCE(gas_price_wei, 0)), 0) as total_gas_fees_wei
+        "from" as address,
+        COALESCE(SUM("gasUsed" * COALESCE("gasPriceWei", 0)), 0) as total_gas_fees_wei
       FROM transactions
-      WHERE block_number >= (
-        SELECT block_number
+      WHERE "blockNumber" IN (
+        SELECT "blockNumber"
         FROM blocks
-        ORDER BY block_number DESC
-        LIMIT 1 OFFSET 4
+        ORDER BY "blockNumber" DESC
+        LIMIT 5
       )
-      GROUP BY from_address
+      GROUP BY "from"
       ORDER BY total_gas_fees_wei DESC
       LIMIT 10
     `
 
-    const results = await prisma.$queryRaw<Array<{
+    const results = await prisma.$queryRawUnsafe<Array<{
       address: string
       total_gas_fees_wei: bigint
     }>>(query)

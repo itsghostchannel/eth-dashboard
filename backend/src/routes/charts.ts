@@ -15,25 +15,19 @@ router.get('/volume-per-block', async (req: Request, res: Response) => {
   try {
     const query = `
       SELECT
-        b.block_number,
+        b."blockNumber" as block_number,
         COUNT(t.id) as tx_count,
-        COALESCE(SUM(t.value_wei), 0) as total_value_wei,
-        COALESCE(SUM(t.gas_used), 0) as total_gas_used,
-        COALESCE(AVG(t.gas_price_wei), 0) as avg_gas_price_wei
+        COALESCE(SUM(t."valueWei"), 0) as total_value_wei,
+        COALESCE(SUM(t."gasUsed"), 0) as total_gas_used,
+        COALESCE(AVG(t."gasPriceWei"), 0) as avg_gas_price_wei
       FROM blocks b
-      LEFT JOIN transactions t ON b.block_number = t.block_number
-      WHERE b.block_number >= (
-        SELECT block_number
-        FROM blocks
-        ORDER BY block_number DESC
-        LIMIT 1 OFFSET 4
-      )
-      GROUP BY b.block_number, b.timestamp
-      ORDER BY b.block_number DESC
+      LEFT JOIN transactions t ON b."blockNumber" = t."blockNumber"
+      GROUP BY b."blockNumber", b."timestamp"
+      ORDER BY b."blockNumber" DESC
       LIMIT 5
     `
 
-    const results = await prisma.$queryRaw<Array<{
+    const results = await prisma.$queryRawUnsafe<Array<{
       block_number: bigint
       tx_count: bigint
       total_value_wei: bigint

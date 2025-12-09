@@ -5,7 +5,7 @@ import app from '../src/app'
 // Mock the singleton prisma instance
 vi.mock('../src/prisma', () => ({
   default: {
-    $queryRaw: vi.fn(),
+    $queryRawUnsafe: vi.fn(),
     $disconnect: vi.fn()
   }
 }))
@@ -19,7 +19,7 @@ describe('Charts API', () => {
     mockPrisma = prisma
 
     // Set default return values
-    mockPrisma.$queryRaw.mockResolvedValue([])
+    mockPrisma.$queryRawUnsafe.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -52,7 +52,7 @@ describe('Charts API', () => {
         }
       ]
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockQueryResults)
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockQueryResults)
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -86,9 +86,9 @@ describe('Charts API', () => {
       })
 
       // Verify the SQL query was called
-      expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT b.block_number, COUNT(t.id) as tx_count')
-      )
+      const calledQuery = mockPrisma.$queryRawUnsafe.mock.calls[0][0]
+      expect(calledQuery).toContain('SELECT')
+      expect(calledQuery).toContain('COUNT(t.id) as tx_count')
     })
 
     it('should handle blocks with no transactions', async () => {
@@ -102,7 +102,7 @@ describe('Charts API', () => {
         }
       ]
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockQueryResults)
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockQueryResults)
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -128,7 +128,7 @@ describe('Charts API', () => {
         }
       ]
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockQueryResults)
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockQueryResults)
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -160,7 +160,7 @@ describe('Charts API', () => {
         }
       ]
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockQueryResults)
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockQueryResults)
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -181,7 +181,7 @@ describe('Charts API', () => {
         }
       ]
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockQueryResults)
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockQueryResults)
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -201,7 +201,7 @@ describe('Charts API', () => {
     })
 
     it('should return empty array when no blocks found', async () => {
-      mockPrisma.$queryRaw.mockResolvedValue([])
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([])
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -214,7 +214,7 @@ describe('Charts API', () => {
     })
 
     it('should handle database errors', async () => {
-      mockPrisma.$queryRaw.mockRejectedValue(new Error('Database connection failed'))
+      mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('Database connection failed'))
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')
@@ -224,33 +224,31 @@ describe('Charts API', () => {
     })
 
     it('should use correct SQL query with proper subquery for last 5 blocks', async () => {
-      mockPrisma.$queryRaw.mockResolvedValue([])
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([])
 
       await request(app)
         .get('/api/charts/volume-per-block')
         .expect(200)
 
-      const queryCall = mockPrisma.$queryRaw.mock.calls[0][0]
-
-      // Verify the query includes the subquery for getting the starting block number
-      expect(queryCall).toContain('SELECT block_number FROM blocks ORDER BY block_number DESC LIMIT 1 OFFSET 4')
+      const queryCall = mockPrisma.$queryRawUnsafe.mock.calls[0][0]
 
       // Verify the query includes the main aggregation logic
       expect(queryCall).toContain('COUNT(t.id) as tx_count')
-      expect(queryCall).toContain('SUM(t.value_wei) as total_value_wei')
-      expect(queryCall).toContain('SUM(t.gas_used) as total_gas_used')
-      expect(queryCall).toContain('AVG(t.gas_price_wei) as avg_gas_price_wei')
+      expect(queryCall).toContain('COALESCE(SUM(t."valueWei"), 0) as total_value_wei');
+      expect(queryCall).toContain('COALESCE(SUM(t."gasUsed"), 0) as total_gas_used');
+      expect(queryCall).toContain('COALESCE(AVG(t."gasPriceWei"), 0) as avg_gas_price_wei');
 
       // Verify the query includes the LEFT JOIN and GROUP BY
-      expect(queryCall).toContain('LEFT JOIN transactions t ON b.block_number = t.block_number')
-      expect(queryCall).toContain('GROUP BY b.block_number')
-      expect(queryCall).toContain('ORDER BY b.block_number DESC LIMIT 5')
+      expect(queryCall).toContain('LEFT JOIN transactions t ON b."blockNumber" = t."blockNumber"');
+      expect(queryCall).toContain('GROUP BY b."blockNumber", b."timestamp"');
+      expect(queryCall).toContain('ORDER BY b."blockNumber" DESC');
+      expect(queryCall).toContain('LIMIT 5')
     })
   })
 
   describe('CORS headers', () => {
     it('should include CORS headers for localhost:5173', async () => {
-      mockPrisma.$queryRaw.mockResolvedValue([])
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([])
 
       const response = await request(app)
         .get('/api/charts/volume-per-block')

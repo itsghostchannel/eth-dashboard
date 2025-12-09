@@ -6,25 +6,25 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider defaultTheme="default" storageKey="vite-ui-theme">
-        <div className="min-h-screen bg-background">
-          <header className="border-b bg-card">
-            <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-              <h1 className="text-xl font-bold">Ethereum Block Explorer</h1>
-              <ThemeToggle />
-            </div>
-          </header>
-          <main>
-            <div className="container mx-auto p-6">
+    <ThemeProvider defaultTheme="default" storageKey="vite-ui-theme">
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-card">
+          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 className="text-xl font-bold">Ethereum Block Explorer</h1>
+            <ThemeToggle />
+          </div>
+        </header>
+        <main>
+          <div className="container mx-auto p-6">
+            <ErrorBoundary>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
               </Routes>
-            </div>
-          </main>
-        </div>
-      </ThemeProvider>
-    </ErrorBoundary>
+            </ErrorBoundary>
+          </div>
+        </main>
+      </div>
+    </ThemeProvider>
   )
 }
 

@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, Power } from 'lucide-react'
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { formatTimeAgo, weiToEth, weiToGwei, truncateAddress, formatTransactionCount, calculateGasPercentage } from '@/lib/format'
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { formatTimeAgo, weiToEth, weiToGwei, truncateAddress, formatTransactionCount, calculateGasPercentage, formatGasPrice } from '@/lib/format'
 
 interface LatestBlock {
   blockNumber: string
@@ -213,6 +213,7 @@ export function Dashboard() {
             onClick={toggleAutoPoll}
             variant={autoPoll ? "default" : "outline"}
             size="sm"
+            data-testid="auto-poll-button"
           >
             <Power className="h-4 w-4 mr-2" />
             Auto-poll: {autoPoll ? "ON" : "OFF"}
@@ -479,7 +480,7 @@ export function Dashboard() {
                 </div>
               ) : data.volumeStats.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={data.volumeStats.reverse()}>
+                  <LineChart data={[...data.volumeStats].reverse()}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="blockNumber"
@@ -490,7 +491,7 @@ export function Dashboard() {
                     />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip
-                      formatter={(value, name) => [value, 'Transactions']}
+                      formatter={(value) => [formatTransactionCount(Number(value)), 'Transactions']}
                       labelFormatter={(label) => `Block #${label}`}
                     />
                     <Line
@@ -523,7 +524,7 @@ export function Dashboard() {
                 </div>
               ) : data.volumeStats.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={data.volumeStats.reverse()}>
+                  <BarChart data={[...data.volumeStats].reverse()}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="blockNumber"
@@ -537,14 +538,13 @@ export function Dashboard() {
                       tickFormatter={(value) => `${value} ETH`}
                     />
                     <Tooltip
-                      formatter={(value, name) => [`${parseFloat(weiToEth(String(value))).toFixed(6)} ETH`, 'Total Value']}
+                      formatter={(value) => [`${parseFloat(weiToEth(String(value))).toFixed(6)} ETH`, 'Total Value']}
                       labelFormatter={(label) => `Block #${label}`}
                     />
                     <Bar
                       dataKey="totalValueWei"
                       fill="#10b981"
                       name="Total Value (wei)"
-                      tickFormatter={(value) => weiToEth(String(value))}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -569,7 +569,7 @@ export function Dashboard() {
                 </div>
               ) : data.volumeStats.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={data.volumeStats.reverse()}>
+                  <AreaChart data={[...data.volumeStats].reverse()}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="blockNumber"
@@ -583,7 +583,7 @@ export function Dashboard() {
                       tickFormatter={(value) => `${(Number(value) / 1000000).toFixed(1)}M`}
                     />
                     <Tooltip
-                      formatter={(value, name) => [
+                      formatter={(value) => [
                         `${formatTransactionCount(Number(value))}`,
                         'Gas Used'
                       ]}

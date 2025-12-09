@@ -15,7 +15,8 @@ const logger = pino({
   })
 })
 
-let pollerInterval: NodeJS.Timeout | null = null
+let pollerTimeout: NodeJS.Timeout | null = null
+let isPolling = false
 
 async function getLatestBlockNumber(): Promise<bigint | null> {
   try {
@@ -151,18 +152,27 @@ export function startPoller(): void {
 
     validateConfig()
 
+    const pollLoop = async () => {
+      if (!isPolling) return
+
+      try {
+        await pollBlock()
+      } catch (error) {
+        logger.error({ error }, 'Error in poll loop')
+      } finally {
+        if (isPolling) {
+          pollerTimeout = setTimeout(pollLoop, pollInterval)
+        }
+      }
+    }
+
     logger.info({
       pollInterval,
       maxBlocks
     }, 'Starting Ethereum block poller')
 
-    pollBlock().then(() => {
-      logger.info('Initial poll completed')
-    }).catch((error) => {
-      logger.error({ error }, 'Initial poll failed')
-    })
-
-    pollerInterval = setInterval(pollBlock, pollInterval)
+    isPolling = true
+    pollLoop()
 
     logger.info('Poller started successfully')
   } catch (error) {
@@ -172,9 +182,10 @@ export function startPoller(): void {
 }
 
 export function stopPoller(): void {
-  if (pollerInterval) {
-    clearInterval(pollerInterval)
-    pollerInterval = null
+  isPolling = false
+  if (pollerTimeout) {
+    clearTimeout(pollerTimeout)
+    pollerTimeout = null
     logger.info('Poller stopped')
   }
 }

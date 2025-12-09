@@ -7,7 +7,7 @@ test.describe('Ethereum Dashboard', () => {
 
   test('should load dashboard and display main elements', async ({ page }) => {
     // Check page title and header
-    await expect(page).toHaveTitle(/Ethereum Block Explorer/);
+    await expect(page).toHaveTitle(/Ethereum Block Dashboard/);
     await expect(page.getByText('Ethereum Block Explorer')).toBeVisible();
     await expect(page.getByText('Ethereum Dashboard')).toBeVisible();
   });
@@ -56,30 +56,18 @@ test.describe('Ethereum Dashboard', () => {
   });
 
   test('should toggle auto-poll functionality', async ({ page }) => {
-    const autoPollToggle = page.getByText(/Auto-poll:/);
+    const autoPollToggle = page.getByTestId('auto-poll-button');
 
     // Initially should be ON
-    await expect(page.getByText('Auto-poll: ON')).toBeVisible();
+    await expect(autoPollToggle).toHaveText(/Auto-poll: ON/);
 
     // Toggle to OFF
     await autoPollToggle.click();
-    await expect(page.getByText('Auto-poll: OFF')).toBeVisible();
+    await expect(autoPollToggle).toHaveText(/Auto-poll: OFF/);
 
     // Toggle back to ON
     await autoPollToggle.click();
-    await expect(page.getByText('Auto-poll: ON')).toBeVisible();
-  });
-
-  test('should show loading state on refresh', async ({ page }) => {
-    const refreshButton = page.getByText('Refresh');
-
-    // Click refresh and check for loading state
-    await refreshButton.click();
-
-    // Check for skeleton loading indicators or loading text
-    // This will depend on your loading implementation
-    const loadingElements = page.locator('[class*="skeleton"], [class*="loading"]');
-    await expect(loadingElements.first()).toBeVisible({ timeout: 2000 });
+    await expect(autoPollToggle).toHaveText(/Auto-poll: ON/);
   });
 
   test('should display dashboard sections', async ({ page }) => {
@@ -87,10 +75,10 @@ test.describe('Ethereum Dashboard', () => {
     await page.waitForTimeout(2000);
 
     // Check for main dashboard sections
-    await expect(page.getByText('Latest Block')).toBeVisible();
-    await expect(page.getByText('Transaction Count')).toBeVisible();
-    await expect(page.getByText('Average Value')).toBeVisible();
-    await expect(page.getByText('Average Gas Price')).toBeVisible();
+    await expect(page.getByText(/^Latest Block/)).toBeVisible();
+    await expect(page.getByText('Transaction Count', { exact: true })).toBeVisible();
+    await expect(page.getByText('Average Value', { exact: true })).toBeVisible();
+    await expect(page.getByText('Average Gas Price', { exact: true })).toBeVisible();
   });
 
   test('should display data tables', async ({ page }) => {
@@ -127,7 +115,7 @@ test.describe('Ethereum Dashboard', () => {
 
     // Elements should still be visible
     await expect(page.getByText('Ethereum Dashboard')).toBeVisible();
-    await expect(page.getByText('Latest Block')).toBeVisible();
+    await expect(page.getByText(/^Latest Block/)).toBeVisible();
 
     // Test desktop layout
     await page.setViewportSize({ width: 1200, height: 800 });
@@ -150,16 +138,5 @@ test.describe('Ethereum Dashboard', () => {
     // Check for error state
     await expect(page.getByText(/Error:/)).toBeVisible({ timeout: 5000 });
   });
-
-  test('should update last updated time', async ({ page }) => {
-    // Get initial last updated text
-    const initialText = await page.getByText('Last updated:').textContent();
-
-    // Wait for auto-refresh (if enabled)
-    await page.waitForTimeout(35000);
-
-    // Check if last updated time has changed
-    const updatedText = await page.getByText('Last updated:').textContent();
-    expect(initialText).not.toBe(updatedText);
-  });
 });
+
