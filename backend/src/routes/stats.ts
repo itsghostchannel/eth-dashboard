@@ -33,13 +33,13 @@ router.get('/top-senders', async (req: Request, res: Response) => {
       LIMIT 10
     `
 
-    const results = await prisma.$queryRawUnsafe<Array<{
+    const results = await prisma.$queryRawUnsafe(query) as Array<{
       address: string
       tx_count: bigint
       total_value: bigint
-    }>>(query)
+    }>
 
-    const topSenders: AddressStats[] = results.map(result => ({
+    const topSenders: AddressStats[] = results.map((result: any) => ({
       address: result.address,
       txCount: Number(result.tx_count),
       totalValue: result.total_value.toString()
@@ -75,13 +75,13 @@ router.get('/top-receivers', async (req: Request, res: Response) => {
       LIMIT 10
     `
 
-    const results = await prisma.$queryRawUnsafe<Array<{
+    const results = await prisma.$queryRawUnsafe(query) as Array<{
       address: string
       tx_count: bigint
       total_value: bigint
-    }>>(query)
+    }>
 
-    const topReceivers: AddressStats[] = results.map(result => ({
+    const topReceivers: AddressStats[] = results.map((result: any) => ({
       address: result.address,
       txCount: Number(result.tx_count),
       totalValue: result.total_value.toString()
@@ -115,12 +115,12 @@ router.get('/top-gas-spenders', async (req: Request, res: Response) => {
       LIMIT 10
     `
 
-    const results = await prisma.$queryRawUnsafe<Array<{
+    const results = await prisma.$queryRawUnsafe(query) as Array<{
       address: string
       total_gas_fees_wei: bigint
-    }>>(query)
+    }>
 
-    const topGasSpenders: GasSpenderStats[] = results.map(result => ({
+    const topGasSpenders: GasSpenderStats[] = results.map((result: any) => ({
       address: result.address,
       totalGasFeesWei: result.total_gas_fees_wei.toString()
     }))

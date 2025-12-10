@@ -27,15 +27,15 @@ router.get('/volume-per-block', async (req: Request, res: Response) => {
       LIMIT 5
     `
 
-    const results = await prisma.$queryRawUnsafe<Array<{
+    const results = await prisma.$queryRawUnsafe(query) as Array<{
       block_number: bigint
       tx_count: bigint
       total_value_wei: bigint
       total_gas_used: bigint
       avg_gas_price_wei: bigint
-    }>>(query)
+    }>
 
-    const volumeStats: BlockVolumeStats[] = results.map(result => ({
+    const volumeStats: BlockVolumeStats[] = results.map((result: any) => ({
       blockNumber: result.block_number.toString(),
       txCount: Number(result.tx_count),
       totalValueWei: result.total_value_wei.toString(),

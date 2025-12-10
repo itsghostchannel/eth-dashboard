@@ -73,7 +73,7 @@ router.get('/', async (req: Request, res: Response) => {
       }
     })
 
-    const blocksWithTxCount: BlockWithTxCount[] = blocks.map(block => ({
+    const blocksWithTxCount: BlockWithTxCount[] = blocks.map((block: any) => ({
       blockNumber: block.blockNumber,
       hash: block.hash,
       parentHash: block.parentHash,
@@ -111,16 +111,16 @@ router.get('/latest', async (req: Request, res: Response) => {
     }
 
     const totalValueWei = latestBlock.transactions.reduce(
-      (sum, tx) => sum + tx.valueWei,
+      (sum: bigint, tx: any) => sum + tx.valueWei,
       0n
     )
 
     const gasPrices = latestBlock.transactions
-      .filter(tx => tx.gasPriceWei !== null)
-      .map(tx => tx.gasPriceWei!)
+      .filter((tx: any) => tx.gasPriceWei !== null)
+      .map((tx: any) => tx.gasPriceWei!)
 
     const avgGasPrice = gasPrices.length > 0
-      ? gasPrices.reduce((sum, price) => sum + price, 0n) / BigInt(gasPrices.length)
+      ? gasPrices.reduce((sum: bigint, price: bigint) => sum + price, 0n) / BigInt(gasPrices.length)
       : null
 
     const blockSummary: BlockSummary = {
@@ -175,7 +175,7 @@ router.get('/:number', async (req: Request, res: Response) => {
       gasUsed: block.gasUsed,
       gasLimit: block.gasLimit,
       baseFeeWei: block.baseFeeWei,
-      transactions: block.transactions.map(tx => ({
+      transactions: block.transactions.map((tx: any) => ({
         id: tx.id,
         txHash: tx.txHash,
         from: tx.from,

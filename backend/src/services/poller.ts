@@ -133,7 +133,7 @@ async function pollBlock(): Promise<void> {
       }, 'New block detected')
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await upsertBlock(block, blockNumber, gasUsed, gasLimit, baseFeeWei)
       await bulkCreateTransactions(transactions)
       await deleteOldBlocks(blockNumber)
