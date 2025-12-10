@@ -40,3 +40,4 @@ tmp/
 temp/
 logs/
 node_modules/
+.vercel
