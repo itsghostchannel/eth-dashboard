@@ -1,7 +1,20 @@
 import { Router, Request, Response } from 'express'
 import prisma from '../prisma'
 
+import { runSinglePoll } from '../services/poller'
+
 const router = Router()
+
+// Trigger manual poll (for on-demand updates or scheduled jobs)
+router.post('/sync', async (req: Request, res: Response) => {
+  try {
+    await runSinglePoll()
+    res.json({ status: 'success', message: 'Blockchain data synced' })
+  } catch (error) {
+    console.error('Manual sync failed:', error)
+    res.status(500).json({ error: 'Failed to sync blockchain data' })
+  }
+})
 
 interface BlockWithTransactions {
   blockNumber: bigint

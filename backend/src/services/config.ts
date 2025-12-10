@@ -7,7 +7,7 @@ export function getMaxBlocks(): number {
 }
 
 export function getEthRpcUrl(): string {
-  return process.env.ETH_RPC_URL || ''
+  return process.env.ETHEREUM_RPC_URL || process.env.ETH_RPC_URL || ''
 }
 
 export function validateConfig(): void {
@@ -16,7 +16,7 @@ export function validateConfig(): void {
   const maxBlocks = getMaxBlocks()
 
   if (!ethRpcUrl) {
-    throw new Error('ETH_RPC_URL environment variable is required')
+    throw new Error('ETHEREUM_RPC_URL environment variable is required')
   }
 
   if (pollInterval < 1000) {

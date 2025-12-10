@@ -1,9 +1,9 @@
 import { EthereumBlock, JsonRpcRequest, JsonRpcResponse, FetchBlockResult } from '../types/block'
 
 function getRpcUrl(): string {
-  const url = process.env.ETH_RPC_URL
+  const url = process.env.ETHEREUM_RPC_URL || process.env.ETH_RPC_URL
   if (!url) {
-    throw new Error('ETH_RPC_URL environment variable is required')
+    throw new Error('ETHEREUM_RPC_URL environment variable is required')
   }
   return url
 }
@@ -61,7 +61,7 @@ function parseBigInt(value: string): bigint {
 
 export async function fetchBlock(): Promise<FetchBlockResult> {
   try {
-    const block = await makeRpcRequest<EthereumBlock>('eth_getBlockByNumber', ['latest', true])
+    const block = await makeRpcRequest<EthereumBlock>('eth_getBlockByNumber', ['finalized', true])
 
     const blockNumber = parseBigInt(block.number)
     const gasUsed = parseBigInt(block.gasUsed)

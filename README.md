@@ -113,6 +113,25 @@ docker-compose logs -f
 docker-compose down
 ```
 
+## ☁️ Vercel Deployment (Free Tier)
+
+This project is optimized for deployment on the Vercel Free Tier. It includes a `vercel.json` configuration that deploys both the frontend and backend as a monorepo.
+
+### How it works on Serverless
+- **Frontend**: Deployed as static assets (Vite).
+- **Backend**: Deployed as Serverless Functions (`/api/*` routes).
+- **Poller**: The background polling loop is **disabled** by default in serverless environments to avoid function timeouts.
+- **Syncing**: The frontend automatically triggers a manual sync (`POST /api/blocks/sync`) when loaded, ensuring data is fresh without running a 24/7 background process.
+
+### Deployment Steps
+1. Push your code to GitHub.
+2. Import the project into Vercel.
+3. Configure **Environment Variables** in Vercel:
+   - `DATABASE_URL`: Connection string for your Vercel Postgres or Supabase instance.
+   - `ETHEREUM_RPC_URL`: Your Ethereum RPC URL (e.g., from Alchemy, Infura, or `https://ethereum.publicnode.com`).
+   - `ENABLE_BACKGROUND_POLLER`: Set to `false`.
+4. Deploy! 🚀
+
 ## 🗄️ Database Schema
 
 The application uses PostgreSQL with the following main entities:
@@ -217,7 +236,7 @@ The E2E tests cover:
 - **Database**: PostgreSQL 13
 - **ORM**: Prisma
 - **Cache**: Redis
-- **Ethereum**: ethers.js (planned)
+- **Ethereum**: ethers.js 
 
 ### Frontend
 - **Framework**: React 18
@@ -257,17 +276,6 @@ The E2E tests cover:
 - **E2E Testing**: Comprehensive Playwright test suite
 - **Statistics**: Top senders, receivers, and gas spenders
 - **Gas Analytics**: Gas usage trends and visualization
-
-## 📝 Next Steps
-
-- [ ] Add WebSocket support for real-time updates
-- [ ] Implement advanced filtering and search functionality
-- [ ] Add transaction detail pages and address exploration
-- [ ] Set up production deployment with CI/CD
-- [ ] Add user authentication and saved preferences
-- [ ] Implement data export features (CSV, JSON)
-- [ ] Add network status indicators and connection monitoring
-- [ ] Implement caching strategies for better performance
 
 ## 📄 License
 

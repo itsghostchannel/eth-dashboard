@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, Power } from 'lucide-react'
+import { RefreshCw, Power, LayoutDashboard } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatTimeAgo, weiToEth, weiToGwei, truncateAddress, formatTransactionCount, calculateGasPercentage, formatGasPrice } from '@/lib/format'
 
@@ -71,6 +71,14 @@ export function Dashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       setError(null)
+
+      // Trigger backend sync (for Vercel/Serverless support)
+      // We ignore errors here so the UI still loads even if sync fails
+      try {
+        await fetch('/api/blocks/sync', { method: 'POST' })
+      } catch (e) {
+        console.warn('Background sync failed', e)
+      }
 
       // Fetch all data in parallel
       const [latestRes, sendersRes, receiversRes, gasRes, volumeRes] = await Promise.all([
@@ -194,7 +202,10 @@ export function Dashboard() {
       {/* Header with controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Ethereum Dashboard</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <LayoutDashboard className="h-8 w-8" />
+            Ethereum Dashboard
+          </h1>
           <div className="text-sm text-muted-foreground">
             Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}
           </div>

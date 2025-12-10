@@ -145,6 +145,10 @@ async function pollBlock(): Promise<void> {
   }
 }
 
+export async function runSinglePoll(): Promise<void> {
+  return pollBlock()
+}
+
 export function startPoller(): void {
   try {
     const pollInterval = getPollInterval()
